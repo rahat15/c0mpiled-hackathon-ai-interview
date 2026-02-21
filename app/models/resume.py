@@ -1,6 +1,4 @@
-"""
-Resume schemas (plain Pydantic — no DB document).
-"""
+"""Resume schemas (plain Pydantic - no DB document)."""
 
 from typing import Any, Dict, List, Optional
 
@@ -8,20 +6,13 @@ from pydantic import BaseModel
 
 
 class ResumeUploadResponse(BaseModel):
+    """Combined upload + evaluation response."""
     resume_id: str
     filename: str
-    text_length: int
     structured_data: Optional[Dict[str, Any]] = None
-
-
-class ResumeScoreResponse(BaseModel):
-    cv_quality: Dict[str, Any]
+    # Evaluation fields (auto-populated after upload)
+    cv_quality: Optional[Dict[str, Any]] = None
     jd_match: Optional[Dict[str, Any]] = None
-    skill_gaps: Optional[List[str]] = None
-    improvement_suggestions: Optional[List[str]] = None
-
-
-class ResumeImprovementResponse(BaseModel):
-    tailored_resume: str
-    cover_letter: str
-    suggestions: List[str]
+    key_takeaways: Optional[Dict[str, Any]] = None
+    fit_index: Optional[float] = None
+    enhancement: Optional[Dict[str, Any]] = None

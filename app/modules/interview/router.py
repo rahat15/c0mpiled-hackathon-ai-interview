@@ -1,11 +1,10 @@
 """
-Interview router — session lifecycle endpoints.
+Interview router - session lifecycle endpoints.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 
 from app.core import store
-from app.core.security import get_current_user
 from app.models.interview import (
     CreateSessionRequest,
     FinalReportResponse,
@@ -18,12 +17,14 @@ from app.modules.interview import orchestrator
 
 router = APIRouter(prefix="/interview", tags=["Interview"])
 
+ANON_USER = "anonymous"
+
 
 @router.post("/session", response_model=InterviewResponse, status_code=status.HTTP_201_CREATED)
-async def create_session(body: CreateSessionRequest, user: dict = Depends(get_current_user)):
+async def create_session(body: CreateSessionRequest):
     try:
         session = orchestrator.create_session(
-            user_id=user["id"], resume_id=body.resume_id,
+            user_id=ANON_USER, resume_id=body.resume_id,
             jd_text=body.jd_text, personality=body.personality,
         )
     except ValueError as exc:
@@ -38,9 +39,9 @@ async def create_session(body: CreateSessionRequest, user: dict = Depends(get_cu
 
 
 @router.post("/session/{session_id}/answer", response_model=InterviewResponse)
-async def submit_answer(session_id: str, body: SubmitAnswerRequest, user: dict = Depends(get_current_user)):
+async def submit_answer(session_id: str, body: SubmitAnswerRequest):
     session = store.sessions.get(session_id)
-    if not session or session["user_id"] != user["id"]:
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     if session["stage"] in (InterviewStage.COMPLETED.value, InterviewStage.FINAL_EVALUATION.value):
         raise HTTPException(status_code=400, detail="Interview already completed")
@@ -64,9 +65,9 @@ async def submit_answer(session_id: str, body: SubmitAnswerRequest, user: dict =
 
 
 @router.post("/session/{session_id}/complete", response_model=FinalReportResponse)
-async def complete_interview(session_id: str, user: dict = Depends(get_current_user)):
+async def complete_interview(session_id: str):
     session = store.sessions.get(session_id)
-    if not session or session["user_id"] != user["id"]:
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     try:
         report = orchestrator.complete_interview(session_id)
@@ -76,9 +77,9 @@ async def complete_interview(session_id: str, user: dict = Depends(get_current_u
 
 
 @router.get("/session/{session_id}")
-async def get_session(session_id: str, user: dict = Depends(get_current_user)):
+async def get_session(session_id: str):
     session = store.sessions.get(session_id)
-    if not session or session["user_id"] != user["id"]:
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     return {
         "session_id": session["id"],
@@ -95,9 +96,9 @@ async def get_session(session_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.get("/session/{session_id}/report", response_model=FinalReportResponse)
-async def get_report(session_id: str, user: dict = Depends(get_current_user)):
+async def get_report(session_id: str):
     session = store.sessions.get(session_id)
-    if not session or session["user_id"] != user["id"]:
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     if not session["final_report"]:
         raise HTTPException(status_code=400, detail="Interview not yet completed")
@@ -105,10 +106,10 @@ async def get_report(session_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.get("/sessions")
-async def list_sessions(user: dict = Depends(get_current_user)):
+async def list_sessions():
     return [
         {"session_id": s["id"], "stage": s["stage"], "question_count": s["question_count"],
          "personality": s["personality"], "is_complete": s["stage"] == InterviewStage.COMPLETED.value,
          "has_report": s["final_report"] is not None, "created_at": s["created_at"]}
-        for s in store.sessions.values() if s["user_id"] == user["id"]
+        for s in store.sessions.values()
     ]

@@ -54,8 +54,7 @@ async def root():
         "docs": "/docs",
         "health": "/health",
         "endpoints": {
-            "auth": "/api/auth/register, /api/auth/login",
-            "resume": "/api/resume/upload, /api/resume/list, /api/resume/{id}, /api/resume/{id}/evaluate, /api/resume/{id}/improve",
+            "resume": "/api/resume/upload, /api/resume/evaluate",
             "interview": "/api/interview/session, /api/interview/sessions, /api/interview/session/{id}/answer, /api/interview/session/{id}/complete, /api/interview/session/{id}/report",
         },
     }
