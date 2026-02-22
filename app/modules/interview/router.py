@@ -35,7 +35,12 @@ async def create_session(body: CreateSessionRequest):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Question generation failed: {exc}")
 
-    return InterviewResponse(session_id=session["id"], stage=session["stage"], question=question)
+    return InterviewResponse(
+        session_id=session["id"],
+        stage=session["stage"],
+        question=question,
+        round_type=session.get("round_type"),
+    )
 
 
 @router.post("/session/{session_id}/answer", response_model=InterviewResponse)
@@ -54,14 +59,31 @@ async def submit_answer(session_id: str, body: SubmitAnswerRequest):
     # Auto-complete if we hit final_evaluation
     if session["stage"] in (InterviewStage.FINAL_EVALUATION.value, InterviewStage.COMPLETED.value):
         orchestrator.complete_interview(session_id)
-        return InterviewResponse(session_id=session["id"], stage=session["stage"], is_complete=True)
+        return InterviewResponse(
+            session_id=session["id"],
+            stage=session["stage"],
+            is_complete=True,
+            evaluation=ev,
+            round_type=session.get("round_type"),
+        )
 
     try:
         question, session = orchestrator.get_next_question(session_id)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Question generation failed: {exc}")
 
-    return InterviewResponse(session_id=session["id"], stage=session["stage"], question=question)
+    # Check if the next question is a follow-up
+    last_history = session["history"][-1] if session["history"] else {}
+    is_followup = last_history.get("is_followup", False)
+
+    return InterviewResponse(
+        session_id=session["id"],
+        stage=session["stage"],
+        question=question,
+        evaluation=ev,
+        is_followup=is_followup,
+        round_type=session.get("round_type"),
+    )
 
 
 @router.post("/session/{session_id}/complete", response_model=FinalReportResponse)
@@ -86,10 +108,21 @@ async def get_session(session_id: str):
         "stage": session["stage"],
         "question_count": session["question_count"],
         "personality": session["personality"],
+        "round_type": session.get("round_type", "full"),
         "is_complete": session["stage"] == InterviewStage.COMPLETED.value,
-        "history": [{"role": e["role"], "content": e["content"], "stage": e["stage"], "timestamp": e["timestamp"]} for e in session["history"]],
-        "strong_topics": session["strong_topics"],
-        "weak_topics": session["weak_topics"],
+        "history": [
+            {
+                "role": e["role"],
+                "content": e["content"],
+                "stage": e.get("stage", ""),
+                "is_followup": e.get("is_followup", False),
+                "timestamp": e.get("timestamp", ""),
+            }
+            for e in session["history"]
+        ],
+        "strong_topics": session.get("strong_topics", []),
+        "weak_topics": session.get("weak_topics", []),
+        "cv_analysis": session.get("cv_analysis"),
         "final_report": session["final_report"],
         "created_at": session["created_at"],
     }
