@@ -182,7 +182,6 @@ export default function ResumeUpload() {
               <div className={`text-5xl font-extrabold ${result.fit_index >= 70 ? "text-emerald-600" : result.fit_index >= 40 ? "text-amber-500" : "text-rose-500"}`}>
                 {result.fit_index}
               </div>
-              <p className="text-xs text-slate-400 mt-1">0.6 × JD Match + 0.4 × CV Quality</p>
             </section>
           )}
 
@@ -275,51 +274,6 @@ export default function ResumeUpload() {
           {/* ── Enhancement (only when JD provided) ────────────── */}
           {result.enhancement && (
             <>
-              {/* Tailored Resume */}
-              {result.enhancement.tailored_resume && (
-                <section className="card">
-                  <h2 className="font-semibold text-lg text-slate-800 mb-4">📝 Tailored Resume</h2>
-                  {result.enhancement.tailored_resume.summary && (
-                    <div className="mb-4">
-                      <h3 className="text-sm font-semibold text-slate-700 mb-1">Summary</h3>
-                      <p className="text-sm text-slate-600 bg-slate-50 rounded-xl p-3">
-                        {result.enhancement.tailored_resume.summary}
-                      </p>
-                    </div>
-                  )}
-                  {result.enhancement.tailored_resume.experience?.length > 0 && (
-                    <div className="mb-4">
-                      <h3 className="text-sm font-semibold text-slate-700 mb-1">Experience</h3>
-                      <ul className="space-y-1.5 text-sm text-slate-600">
-                        {result.enhancement.tailored_resume.experience.map((e, i) => (
-                          <li key={i} className="flex gap-2"><span className="text-brand-500">•</span>{e}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {result.enhancement.tailored_resume.skills?.length > 0 && (
-                    <div className="mb-4">
-                      <h3 className="text-sm font-semibold text-slate-700 mb-1">Skills</h3>
-                      <div className="flex flex-wrap gap-1.5">
-                        {result.enhancement.tailored_resume.skills.map((s, i) => (
-                          <span key={i} className="bg-brand-50 text-brand-700 text-xs px-2.5 py-1 rounded-full">{s}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {result.enhancement.tailored_resume.projects?.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-slate-700 mb-1">Projects</h3>
-                      <ul className="space-y-1.5 text-sm text-slate-600">
-                        {result.enhancement.tailored_resume.projects.map((p, i) => (
-                          <li key={i} className="flex gap-2"><span className="text-brand-500">•</span>{p}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </section>
-              )}
-
               {/* Top 1% Gap Analysis */}
               {result.enhancement.top_1_percent_gap && (
                 <section className="card">
